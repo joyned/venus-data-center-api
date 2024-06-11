@@ -1,6 +1,7 @@
 package com.venus.datacenter.core.service.impl;
 
 import com.venus.datacenter.core.entity.Connector;
+import com.venus.datacenter.core.entity.ConnectorRest;
 import com.venus.datacenter.core.entity.ConnectorSQL;
 import com.venus.datacenter.core.entity.Dashboard;
 import com.venus.datacenter.core.exception.DashboardExecutionException;
@@ -9,7 +10,9 @@ import com.venus.datacenter.core.repository.DashboardRepository;
 import com.venus.datacenter.core.service.DashboardExecution;
 import com.venus.datacenter.core.service.SQLConnector;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -46,6 +49,16 @@ public class DashboardExecutionImpl implements DashboardExecution {
                 query = query.replace(key, value.trim());
             }
             return executeSQLConnector((ConnectorSQL) connector, query);
+        } else if (connector instanceof ConnectorRest) {
+            String url = ((ConnectorRest) connector).getUrl();
+            String query = dashboard.getQuery();
+            for (Map.Entry<String, String> entry : parameters.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                query = query.replace(key, value.trim());
+                url = url.replace(key, value.trim());
+            }
+            return executeRestConnector((ConnectorRest) connector, url, query);
         }
 
         return null;
@@ -65,6 +78,31 @@ public class DashboardExecutionImpl implements DashboardExecution {
             }
         } catch (Exception e) {
             throw new DashboardExecutionException(e);
+        }
+        return result;
+    }
+
+    private Object executeRestConnector(ConnectorRest connector, String url, String query) {
+        Object result = null;
+        RestTemplate restTemplate = new RestTemplate();
+
+        String method = connector.getMethod();
+        switch (method) {
+            case "GET" -> {
+                result = restTemplate.getForObject(url, Object.class);
+            }
+            case "POST" -> {
+                HttpEntity httpEntity = new HttpEntity(query);
+                result = restTemplate.postForObject(url, httpEntity, Object.class);
+            }
+            case "PUT" -> {
+                HttpEntity httpEntity = new HttpEntity(query);
+                result = restTemplate.exchange(url, org.springframework.http.HttpMethod.PUT, httpEntity, Object.class);
+            }
+        }
+
+        if (result instanceof LinkedHashMap<?, ?>) {
+            return List.of(result);
         }
         return result;
     }
