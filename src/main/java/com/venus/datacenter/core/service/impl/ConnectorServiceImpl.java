@@ -68,7 +68,7 @@ public class ConnectorServiceImpl implements ConnectorService {
             connectorRest.setName((String) connector.get("name"));
             connectorRest.setDescription((String) connector.get("description"));
             connectorRest.setUrl((String) connector.get("url"));
-            connectorRest.setMethod((String) connector.get("method"));
+            connectorRest.setMethod(((LinkedHashMap<String, String>) connector.get("method")).get("name"));
             connectorRest.setHeaders((String) connector.get("headers"));
             con = saveConnectorRest(connectorRest);
         }

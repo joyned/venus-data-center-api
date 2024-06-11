@@ -6,6 +6,8 @@ import com.venus.datacenter.core.entity.ConnectorSQL;
 import com.venus.datacenter.core.entity.Dashboard;
 import com.venus.datacenter.core.model.ConnectorTypeEnum;
 import com.venus.datacenter.web.dto.ConnectorDTO;
+import com.venus.datacenter.web.dto.ConnectorRestDTO;
+import com.venus.datacenter.web.dto.ConnectorSQLDTO;
 import com.venus.datacenter.web.dto.DashboardDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -44,15 +46,23 @@ public interface DashboardMapper {
 
     @Named("createConnectorDTO")
     default ConnectorDTO createConnectorDTO(Connector connector) {
-        ConnectorDTO connectorDTO = new ConnectorDTO();
-        connectorDTO.setId(connector.getId());
-        connectorDTO.setName(connector.getName());
-        connectorDTO.setDescription(connector.getDescription());
+
         if (connector instanceof ConnectorSQL) {
-            connectorDTO.setType(ConnectorTypeEnum.SQL.getValue());
+            ConnectorSQLDTO connectorSQLDTO = new ConnectorSQLDTO();
+            connectorSQLDTO.setId(connector.getId());
+            connectorSQLDTO.setName(connector.getName());
+            connectorSQLDTO.setDescription(connector.getDescription());
+            connectorSQLDTO.setType(ConnectorTypeEnum.SQL.getValue());
+            return connectorSQLDTO;
         } else if (connector instanceof ConnectorRest) {
-            connectorDTO.setType(ConnectorTypeEnum.REST.getValue());
+            ConnectorRestDTO connectorRestDTO = new ConnectorRestDTO();
+            connectorRestDTO.setId(connector.getId());
+            connectorRestDTO.setName(connector.getName());
+            connectorRestDTO.setDescription(connector.getDescription());
+            connectorRestDTO.setType(ConnectorTypeEnum.REST.getValue());
+            connectorRestDTO.setUrl(((ConnectorRest) connector).getUrl());
+            return connectorRestDTO;
         }
-        return connectorDTO;
+        return null;
     }
 }
